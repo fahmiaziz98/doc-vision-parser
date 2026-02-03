@@ -16,7 +16,7 @@ keywords = ["vlm", "document-parsing", "ocr", "pdf", "vision-language-model", "a
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache License 2.0",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -83,6 +83,8 @@ exclude_lines = [
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+
+[tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
 ignore = ["E501"]
 

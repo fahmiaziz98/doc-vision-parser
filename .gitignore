@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# skills
+.agent/*
+
 # Distribution / packaging
 .Python
 build/
