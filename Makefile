@@ -1,32 +1,37 @@
-.PHONY: lint format check test test-unit test-integration
+.PHONY: lint format check test test-unit test-integration build
 
 # Variables
 PYTHON := python3
 RUFF := ruff
 PYTEST := pytest
+UV := uv
 
 # Default target
-all: lint format test
+all: lint format test build
 
 # Linting
 lint:
-	uv run $(RUFF) check . --fix
+	$(UV) run $(RUFF) check . --fix
 
 # Formatting
 format:
-	uv run $(RUFF) format .
+	$(UV) run $(RUFF) format .
 
 # Check without fixing (CI style)
 check:
-	uv run $(RUFF) check .
-	uv run $(RUFF) format --check .
+	$(UV) run $(RUFF) check .
+	$(UV) run $(RUFF) format --check .
 
 # Testing
 test:
-	uv run $(PYTEST)
+	$(UV) run $(PYTEST)
 
 test-unit:
-	uv run $(PYTEST) -m unit
+	$(UV) run $(PYTEST) -m unit
 
 test-integration:
-	uv run $(PYTEST) -m integration
+	$(UV) run $(PYTEST) -m integration
+
+# Building
+build:
+	$(UV) build
