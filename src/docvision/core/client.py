@@ -1,7 +1,7 @@
 import asyncio
 import os
 import time
-from typing import Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
 from openai import AsyncOpenAI, OpenAI
 from pydantic import BaseModel
@@ -13,6 +13,14 @@ class VLMClient:
     """
     A client for interacting with Vision Language Models (VLMs) via OpenAI-compatible APIs.
     Supports both synchronous and asynchronous calls with automatic retries.
+
+    Attributes:
+        model_name: Name of the model to use.
+        max_tokens: Maximum number of tokens for the completion.
+        temperature: Sampling temperature.
+        timeout: Request timeout in seconds.
+        max_retries: Number of retry attempts.
+        retry_delay: Delay between retries in seconds.
     """
 
     def __init__(
@@ -37,7 +45,7 @@ class VLMClient:
             temperature: Sampling temperature.
             timeout: Request timeout in seconds.
             max_retries: Maximum number of retry attempts for failed requests.
-            retry_delay: Delay between retries in seconds (exponential backoff is applied).
+            retry_delay: Delay between retries in seconds.
         """
         self.model_name = model_name
         self.max_tokens = max_tokens
@@ -46,8 +54,8 @@ class VLMClient:
         self.max_retries = max_retries
         self.retry_delay = retry_delay
 
-        # Use environment variable if api_key is not provided
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY", "")
+        # Ensure we have an API key or a placeholder for local servers
+        self.api_key = api_key or os.getenv("OPENAI_API_KEY", "EMPTY")
 
         self.client = OpenAI(base_url=base_url, api_key=self.api_key, timeout=timeout)
 
@@ -60,15 +68,15 @@ class VLMClient:
         system_prompt: Optional[str] = None,
         user_prompt: Optional[str] = None,
         output_schema: Optional[Type[BaseModel]] = None,
-    ):
+    ) -> Any:
         """
         Make a synchronous call to the VLM.
 
         Args:
             image_b64: Base64 encoded image string.
-            mime_type: The MIME type of the image (e.g., 'image/jpeg').
-            system_prompt: Optional system prompt to override the default.
-            user_prompt: Optional user prompt to override the default.
+            mime_type: The MIME type of the image.
+            system_prompt: Optional system prompt override.
+            user_prompt: Optional user prompt override.
             output_schema: Optional Pydantic model for structured output parsing.
 
         Returns:
@@ -115,15 +123,15 @@ class VLMClient:
         system_prompt: Optional[str] = None,
         user_prompt: Optional[str] = None,
         output_schema: Optional[Type[BaseModel]] = None,
-    ):
+    ) -> Any:
         """
         Make an asynchronous call to the VLM.
 
         Args:
             image_b64: Base64 encoded image string.
-            mime_type: The MIME type of the image (e.g., 'image/jpeg').
-            system_prompt: Optional system prompt to override the default.
-            user_prompt: Optional user prompt to override the default.
+            mime_type: The MIME type of the image.
+            system_prompt: Optional system prompt override.
+            user_prompt: Optional user prompt override.
             output_schema: Optional Pydantic model for structured output parsing.
 
         Returns:
@@ -170,7 +178,7 @@ class VLMClient:
         system_prompt: Optional[str] = None,
         user_prompt: Optional[str] = None,
         output_schema: Optional[Type[BaseModel]] = None,
-    ) -> List[Dict]:
+    ) -> List[Dict[str, Any]]:
         """
         Construct the message payload for the API call.
 
@@ -179,7 +187,7 @@ class VLMClient:
             mime_type: The MIME type of the image.
             system_prompt: Optional system prompt override.
             user_prompt: Optional user prompt override.
-            output_schema: Optional output schema (affects system prompt defaults).
+            output_schema: Optional output schema.
 
         Returns:
             A list of message dictionaries.

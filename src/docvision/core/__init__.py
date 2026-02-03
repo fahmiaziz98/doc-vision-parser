@@ -1,4 +1,5 @@
 from .client import VLMClient
+from .parser import DocumentParsingAgent
 from .types import (
     AgenticParseState,
     BatchParseResult,
@@ -9,6 +10,7 @@ from .types import (
 
 __all__ = [
     "VLMClient",
+    "DocumentParsingAgent",
     "ImageFormat",
     "ParsingMode",
     "ParseResult",

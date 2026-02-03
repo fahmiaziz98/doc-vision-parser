@@ -1,3 +1,4 @@
+from .graph import AgenticWorkflow
 from .prompts import (
     CONTINUE_PROMPT,
     DEFAULT_SYSTEM_PROMPT,
@@ -7,6 +8,7 @@ from .prompts import (
 )
 
 __all__ = [
+    "AgenticWorkflow",
     "DEFAULT_SYSTEM_PROMPT",
     "DEFAULT_USER_PROMPT",
     "TRANSCRIPTION",

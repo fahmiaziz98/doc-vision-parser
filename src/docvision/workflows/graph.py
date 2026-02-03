@@ -10,7 +10,7 @@ from ..utils import (
     extract_transcription,
     has_complete_transcription,
 )
-from .prompts import CONTINUE_PROMPT, DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT, FIX_PROMPT
+from .prompts import CONTINUE_PROMPT, FIX_PROMPT
 
 MAX_ITERATIONS = 3
 
@@ -47,8 +47,8 @@ class AgenticWorkflow:
             user_prompt: Optional override for the initial user prompt.
         """
         self.vlm_client = vlm_client
-        self.system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
-        self.user_prompt = user_prompt or DEFAULT_USER_PROMPT
+        self.system_prompt = system_prompt
+        self.user_prompt = user_prompt
 
         self.graph = self._build_graph()
 
@@ -87,7 +87,7 @@ class AgenticWorkflow:
         return {
             "iteration_count": 0,
             "accumulated_text": "",
-            "current_prompt": self.user_prompt or DEFAULT_USER_PROMPT,
+            "current_prompt": self.user_prompt,
             "generation_history": [],
         }
 
