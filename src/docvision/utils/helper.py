@@ -27,8 +27,8 @@ def detect_retention_loop(
 
     for pattern_len in range(min_pattern_length, 200):
         if pattern_len > len(tail):
-             break
-             
+            break
+
         pattern = tail[-pattern_len:]
 
         if not pattern.strip():
@@ -37,14 +37,14 @@ def detect_retention_loop(
         count = 1  # Start with 1 for the pattern at the end
         pos = len(tail) - pattern_len * 2  # Start checking immediately before the last pattern
 
-        while pos >= 0: 
-             chunk = tail[pos : pos + pattern_len]
-             if chunk == pattern:
+        while pos >= 0:
+            chunk = tail[pos : pos + pattern_len]
+            if chunk == pattern:
                 count += 1
                 pos -= pattern_len
-             else:
+            else:
                 break
-        
+
         if count >= threshold:
             # loop_start is relative to the FULL text
             loop_len = count * pattern_len

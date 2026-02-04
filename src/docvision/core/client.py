@@ -7,9 +7,6 @@ from openai import AsyncOpenAI, OpenAI
 from pydantic import BaseModel
 
 
-
-
-
 class VLMClient:
     """
     A client for interacting with Vision Language Models (VLMs) via OpenAI-compatible APIs.
@@ -217,7 +214,6 @@ class VLMClient:
         user_content = [
             {"type": "text", "text": user_prompt or DEFAULT_USER_PROMPT},
             {
-
                 "type": "image_url",
                 "image_url": {"url": f"data:{mime_type};base64,{image_b64}"},
             },
