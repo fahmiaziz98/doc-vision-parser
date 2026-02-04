@@ -169,7 +169,7 @@ The `DocumentParsingAgent` is highly configurable.
 | `api_key` | `str` | `None` | API key |
 | `timeout` | `float` | `300.0` | Request timeout in seconds. |
 | `temperature` | `float` | `0.0` | Sampling temperature. |
-| `max_tokens` | `int` | `2048` | Maximum tokens for the response. |
+| `max_tokens` | `int` | `2048` | Maximum tokens for the response (increase this value if the documents are long). |
 | `auto_crop` | `bool` | `False` | Enable intelligent content cropping. |
 | `resize` | `bool` | `True` | Resize large images to `max_dimension`. |
 | `max_dimension` | `int` | `2048` | Max width/height for resizing. |
