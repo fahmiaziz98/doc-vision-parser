@@ -11,18 +11,20 @@ from PIL import Image
 
 from ..core.types import ImageFormat
 from .crop import ContentCropper
+from .rotate import ImageRotator
 
 
 class ImageProcessor:
     """
     Handles PDF to image conversion and subsequent image optimization including
-    cropping, resizing, and base64 encoding.
+    auto-rotation, cropping, resizing, and base64 encoding.
     """
 
     def __init__(
         self,
         dpi: int = 300,
         auto_crop: bool = False,
+        auto_rotate: bool = False,
         resize: bool = True,
         max_dimension: int = 2048,
         crop_padding: int = 10,
@@ -30,6 +32,9 @@ class ImageProcessor:
         crop_footer_gap_threshold: int = 100,
         crop_column_ink_ratio: float = 0.01,
         crop_row_ink_ratio: float = 0.002,
+        rotate_score_diff_threshold: float = 0.35,
+        rotate_small_angle_threshold: float = 0.1,
+        rotate_analysis_max_size: int = 1500,
         debug_save_path: Optional[str] = None,
     ):
         """
@@ -38,6 +43,7 @@ class ImageProcessor:
         Args:
             dpi: Dots per inch for PDF rendering.
             auto_crop: Whether to automatically crop the image content.
+            auto_rotate: Whether to automatically correct the image orientation.
             resize: Whether to resize the image to a fixed or maximum dimension.
             max_dimension: Maximum dimension (width or height) for the processed image.
             crop_padding: Padding for the auto-crop.
@@ -45,10 +51,14 @@ class ImageProcessor:
             crop_footer_gap_threshold: Vertical gap threshold for auto-crop.
             crop_column_ink_ratio: Column ink ratio for auto-crop.
             crop_row_ink_ratio: Row ink ratio for auto-crop.
+            rotate_score_diff_threshold: Minimum score difference for rotation confidence.
+            rotate_small_angle_threshold: Minimum angle for micro-rotation correction.
+            rotate_analysis_max_size: Max dimension for rotation analysis.
             debug_save_path: Path to save intermediate images for debugging.
         """
         self.dpi = dpi
         self.auto_crop = auto_crop
+        self.auto_rotate = auto_rotate
         self.resize = resize
         self.max_dimension = max_dimension
         self.debug_save_path = Path(debug_save_path) if debug_save_path else None
@@ -65,6 +75,16 @@ class ImageProcessor:
                 row_ink_ratio=crop_row_ink_ratio,
             )
             if auto_crop
+            else None
+        )
+
+        self.rotator = (
+            ImageRotator(
+                score_diff_threshold=rotate_score_diff_threshold,
+                small_angle_threshold=rotate_small_angle_threshold,
+                analysis_max_size=rotate_analysis_max_size,
+            )
+            if auto_rotate
             else None
         )
 
@@ -115,7 +135,7 @@ class ImageProcessor:
         self, image: Image.Image, page_num: int = 0, doc_name: str = "image"
     ) -> Image.Image:
         """
-        Apply processing operations such as cropping and resizing to an image.
+        Apply processing operations such as auto-rotation, cropping, and resizing to an image.
 
         Args:
             image: PIL Image input.
@@ -125,23 +145,34 @@ class ImageProcessor:
         Returns:
             The processed PIL Image.
         """
+        img_np = np.array(image)
+        # Convert RGB to BGR for OpenCV
+        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+
+        # 1. Auto-Rotate
+        if self.auto_rotate and self.rotator:
+            img_bgr = self.rotator.rotate(img_bgr)
+
+        # 2. Auto-Crop
         if self.auto_crop and self.cropper:
-            img_array = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-            cropped_array = self.cropper.crop(img_array)
-            image = Image.fromarray(cv2.cvtColor(cropped_array, cv2.COLOR_BGR2RGB))
+            img_bgr = self.cropper.crop(img_bgr)
 
+        # 3. Resize
         if self.resize:
-            img_np = np.array(image)
-            resized_np = self._resize_image(img_np)
-            image = Image.fromarray(resized_np)
-            processed_image = image
+            img_bgr = self._resize_image(img_bgr)
         else:
-            max_dim = self.max_dimension
-            if max(image.size) > max_dim:
-                image.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
+            # Thumbnail if exceeds max dimension
+            h, w = img_bgr.shape[:2]
+            if max(h, w) > self.max_dimension:
+                scale = self.max_dimension / max(h, w)
+                new_w = int(w * scale)
+                new_h = int(h * scale)
+                img_bgr = cv2.resize(img_bgr, (new_w, new_h), interpolation=cv2.INTER_LANCZOS4)
 
-            processed_image = image
+        # Convert back to PIL RGB
+        processed_image = Image.fromarray(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
 
+        # Debug Save
         if self.debug_save_path:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             debug_filename = f"{doc_name}_page{page_num:03d}_{timestamp}.png"
@@ -170,7 +201,13 @@ class ImageProcessor:
         buffer = BytesIO()
 
         if image_format == ImageFormat.JPEG:
-            image.save(buffer, format="JPEG", quality=jpeg_quality, optimize=True, subsampling=0)
+            image.save(
+                buffer,
+                format="JPEG",
+                quality=jpeg_quality,
+                optimize=True,
+                subsampling=0,
+            )
             mime_type = "image/jpeg"
         else:
             image.save(buffer, format="PNG", optimize=True)
